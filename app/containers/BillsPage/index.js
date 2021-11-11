@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     FormControl,
     InputLabel,
@@ -13,38 +13,43 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 import { api } from './constants.js';
 
-const states = [
-    { id: 'ca', name: 'California' },
-    { id: 'il', name: 'Illinois' },
-    { id: 'ny', name: 'New York' },
-    { id: 'tx', name: 'Texas' },
-];
 
 export default function BillsPage() {
     const [bills, setBills] = useState([]);
     const [selectedState, setSelectedState] = useState('');
-    const [billsLoading, setBillsLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [states, setStates] = useState([]);
 
     const searchBills = event => {
         setSelectedState(event.target.value);
         const url = `${api}/bills?j=${event.target.value}`;
-        setBillsLoading(true);
+        setLoading(true);
         fetch(url)
             .then(res => res.json())
             .then(billList => {
                 setBills(billList);
-                setBillsLoading(false);
+                setLoading(false);
             });
     };
 
+    useEffect(() => {
+        const url = `${api}/jurisdictions`;
+        setLoading(true);
+        fetch(url)
+            .then(res => res.json())
+            .then(statesList => {
+                setStates(statesList);
+                setLoading(false)
+            });
+    }, [])
+
     return (
         <Box sx={{ minWidth: '100%' }}>
-            <Box sx={{ minWidth: 120, display: 'flex', justifyContent: 'center' }}>
-                {billsLoading ? (
-                    <PuffLoader loading={billsLoading} size={150} />
+            <Box sx={{ minWidth: 120, display: 'flex', justifyContent: 'center', minHeight: '16vh' }}>
+                {loading ? (
+                    <PuffLoader loading={loading} size={150} />
                 ) : (
                     <FormControl sx={{ minWidth: '30%' }}>
                         <InputLabel>State</InputLabel>
@@ -62,7 +67,7 @@ export default function BillsPage() {
                     </FormControl>
                 )}
             </Box>
-            <TableContainer component={Paper}>
+            <TableContainer >
                 <Table sx={{ minWidth: 650 }}>
                     <TableHead>
                         <TableRow>
@@ -77,7 +82,7 @@ export default function BillsPage() {
                                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                             >
                                 <TableCell component="th" scope="row">
-                                    {bill.title}
+                                    {bill.title.length > 200 ? `${bill.title.substring(0, 200)}...` : bill.title}
                                 </TableCell>
                                 <TableCell>{bill.identifier}</TableCell>
                             </TableRow>
